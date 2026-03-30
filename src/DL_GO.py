@@ -32,7 +32,6 @@ def run_go(GPU):
         import SimulationSettings.Settings1 as SS
 
     print(f"run_go:  {GPU}  {device}")
-    _go()
 
     def _go(config=None):
 
@@ -69,13 +68,13 @@ def run_go(GPU):
                 print('loss function: ', str(loss_type))
                 print('Batch size: ', SS.batchsize)
                 print('Training epochs: ', SS.epochs)
-                print(SS.device)
+                print(device)
                 run_start_time = time.process_time()
                 print('start time: ',run_start_time)
             
                 epochs = SS.epochs #40
             
-                IP = ImageProcessor(SS.device)
+                IP = ImageProcessor(device)
             
                 #wandb.log({'gitHash':SS.gitHASH})
                         #wandb.log({'Epochs': epochs})
@@ -98,10 +97,10 @@ def run_go(GPU):
             
                 # SELECTING THE MODEL BASED ON MODEL_NAME
                 if model_name == 'resnet18':
-                    model = resnet18(weights=None, num_classes =360).to(SS.device)
+                    model = resnet18(weights=None, num_classes =360).to(device)
                     model_index = 100
                 else:
-                    model = choose_model(model_name, lin_lay, dropout, SS.output_lin_lay).to(SS.device)
+                    model = choose_model(model_name, lin_lay, dropout, SS.output_lin_lay).to(device)
             
                 # FOR increases DS size in training via augmentations (yaw augmentations) only create the DSL for test here, Train and Val in epoch loop
                 # that will give different yaw augmentations each loop
@@ -112,7 +111,7 @@ def run_go(GPU):
                 av_lum = IP.new_luminance(x_train)
                 train = (x_train, resolution, av_lum, model_name, SS.half_ciprange, SS.std_dev, batch)
             
-                test_ds= IDSWDataSetLoader3(x_test, resolution,av_lum,model_name, SS.half_ciprange, SS.std_dev, SS.device)
+                test_ds= IDSWDataSetLoader3(x_test, resolution,av_lum,model_name, SS.half_ciprange, SS.std_dev, device)
                 test = DataLoader(test_ds, batch_size=SS.batchsize, shuffle=True, drop_last=True) #, num_workers=2
             
                 # set optimizer
@@ -126,10 +125,10 @@ def run_go(GPU):
                 loop_run_name = f"{save_dict['Run']}_{resolution}_{SS.learning_rate}_{SS.scheduler_value}_{seed}_{loss_type}"
             
                 # TRAINING # TRAINING # TRAINING # TRAINING # TRAINING # TRAINING # TRAINING # TRAINING # TRAINING # TRAINING # TRAINING # TRAINING 
-                model, save_dict = train_val_batch(model, train, x_val, save_dict, SS.learning_rate, loss_fn,epochs, SS.batchsize, optimizer, SS.scheduler_value, SS.device, config, SS)
+                model, save_dict = train_val_batch(model, train, x_val, save_dict, SS.learning_rate, loss_fn,epochs, SS.batchsize, optimizer, SS.scheduler_value, device, config, SS)
             
                 # TESTING # TESTING # TESTING # TESTING # TESTING # TESTING # TESTING # TESTING # TESTING # TESTING # TESTING # TESTING 
-                test_acc, test_predict_list, y_test = test_loop_batch(model,test, loss_fn, SS.batchsize, SS.device,config, runname=loop_run_name, save_loc = save_dict['save_location']) #model, model_name, X, Y, res, pad, loss_fn, device, num_classes=11
+                test_acc, test_predict_list, y_test = test_loop_batch(model,test, loss_fn, SS.batchsize, device,config, runname=loop_run_name, save_loc = save_dict['save_location']) #model, model_name, X, Y, res, pad, loss_fn, device, num_classes=11
                 test_predict_numerical = [p.item() for p in test_predict_list]
                 y_test_numerical = [y.item() for y in y_test]
             
@@ -177,3 +176,4 @@ def run_go(GPU):
             
                 torch.save(model.state_dict(), f"{SS.save_location}{loop_run_name}.pkl")
                 torch.cuda.empty_cache()
+    _go()

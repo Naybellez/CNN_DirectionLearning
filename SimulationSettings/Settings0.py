@@ -8,7 +8,7 @@ data_path = "/its/home/nn268/antvis/antvis/optics/NC_IDSW/"
 gitHASH = " 32d139c134ef0530871dc082bae2923877f71936"
 
 
-model_name = '7c3l'
+model_name = '6c3l'
 epochs = 300
 tv = [15, 5]
 learning_rate = 1e-4

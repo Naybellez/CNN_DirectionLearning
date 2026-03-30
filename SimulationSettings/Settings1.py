@@ -2,14 +2,13 @@ import os
 import torch
 from src.modelCardsP3Direction import Cards, return_card
 import random
-device = "cuda:1" if torch.cuda.is_available() else "cpu"
 
 save_dir  = "saves/"
 data_path = "/its/home/nn268/antvis/antvis/optics/NC_IDSW/"
 
 gitHASH = " 32d139c134ef0530871dc082bae2923877f71936"
 
-model_name = '8c3l'
+model_name = '7c3l'
 epochs = 300
 tv = [8, 3]
 learning_rate = 1e-4
