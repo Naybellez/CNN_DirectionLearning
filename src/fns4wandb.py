@@ -27,8 +27,9 @@ import torch.optim.lr_scheduler as lr_scheduler
 #import wandb
 import pprint
 
-from loop_fns import loop, test_loop
-from functions import import_imagedata, get_data, label_oh_tf,  Unwrap, ImageProcessor
+from src.loop_fns import loop, test_loop
+from src.functions import import_imagedata, get_data, label_oh_tf,  Unwrap, ImageProcessor, IDSWDataSetLoader
+
 
 #from architectures import sevennet, smallnet1, smallnet2, smallnet3, build_net
 from copy import deepcopy
@@ -345,10 +346,6 @@ def train_model(model, x_train, y_train, x_val, y_val,loss_fn, config, col_dict,
     return save_dict
 
 
-#edits to include a dataloader 10/01/24
-from functions import IDSWDataSetLoader
-from functions import get_data
-from functions import ImageProcessor
 
 # below works!!!!! 290124
 def train(device,col_dict, save_dict, config=None):
@@ -446,7 +443,7 @@ def train(device,col_dict, save_dict, config=None):
 
 
 # train with dataloader
-from functions import IDSWDataSetLoader
+
 def train_DL(device,col_dict, save_dict, config=None):
     # lists for save dict
     t_loss_list = []

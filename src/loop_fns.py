@@ -21,8 +21,8 @@ from tqdm import tqdm
 
 import sys
 sys.path.append('../.')
-from functions import ImageProcessor,label_oh_tf
-from modelManagment import choose_scheduler
+from src.functions import ImageProcessor,label_oh_tf
+from src.modelManagment import choose_scheduler
 #import wandb
 #
 
@@ -374,5 +374,3 @@ def train_val_batch(model, train, val, loop_run_name, save_dict, lr, loss_fn, ep
     save_dict['v_predict_list'] = v_predict_list  #
     
     return model, save_dict
-
-from functions import ImageProcessor

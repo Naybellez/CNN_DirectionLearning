@@ -1,6 +1,6 @@
 import os
 import torch
-from Dir_learning.modelCardsP3Direction import Cards, return_card
+from src.modelCardsP3Direction import Cards, return_card
 import random
 device = "cuda:1" if torch.cuda.is_available() else "cpu"
 

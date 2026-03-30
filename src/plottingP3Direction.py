@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import f1_score, accuracy_score, confusion_matrix, ConfusionMatrixDisplay
 import pickle
 import seaborn as sns
-from plotting import check_save_path
+from src.plotting import check_save_path
 import os
 import re
 

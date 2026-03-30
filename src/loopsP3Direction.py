@@ -1,5 +1,3 @@
-from functions import ImageProcessor
-import torch
 
 import cv2
 from PIL import Image
@@ -16,11 +14,12 @@ import os
 import random
 
 from sklearn.model_selection import train_test_split
+
 #import torch.optim.lr_scheduler as lr_scheduler
 import torch
 import torch.nn as nn
 from torch.nn import functional
-
+from torch.utils.data import DataLoader
 
 #from tqdm import tqdm
 
@@ -29,9 +28,10 @@ from torch.nn import functional
 import sys
 sys.path.append('../.')
 
-from torch.utils.data import DataLoader
-from dataloaderP3Direction import IDSWDataSetLoader3
-import Simulation_settings as SS
+from src.dataloaderP3Direction import IDSWDataSetLoader3
+from src.functions import ImageProcessor
+
+#import SimulationSettings.Settings0 as SS
 
 
 
@@ -107,7 +107,7 @@ def loop_batch(model,
                random_value,
                epoch, 
                IP,
-               save_dict, device, config,
+               save_dict, device, config,SS,
                optimizer = None, 
                train =True):	# Train and Val loops. Default is train
     
@@ -155,7 +155,7 @@ def loop_batch(model,
             loss.backward()
             optimizer.step()
             
-          
+        
         acc = get_roughAcc(SS.std_dev, y_batch, prediction)
         #if train:
         #    wandb.log({"TrainAcc rough": acc[2]})
@@ -279,7 +279,7 @@ def test_loop_batch(model,data, loss_fn, batch_size, device, config, runname="",
         accuracy = {'BaseAcc':baseacc_list,'MSE': MSE_list, 'MAE': MAE_list, 'peakDist': peakdist_list}
         return accuracy, predict_list, label_list
 
-def train_val_batch(model, train, val, save_dict, lr, loss_fn, epochs, batch_size, optimizer, scheduler, device, config): #train_dl, val_dl, 
+def train_val_batch(model, train, val, save_dict, lr, loss_fn, epochs, batch_size, optimizer, scheduler, device, config, SS): #train_dl, val_dl, 
     #print("Current allocated memory (GB):", torch.cuda.memory_allocated() / 1024 ** 3) 
     import sys
     sys.path.append('../.')
@@ -347,7 +347,7 @@ def train_val_batch(model, train, val, save_dict, lr, loss_fn, epochs, batch_siz
                                                                                                              epoch,  
                                                                                                              IP,
                                                                                                              save_dict, 
-                                                                                                             device, config,
+                                                                                                             device, config,SS,
                                                                                                              optimizer, 
                                                                                                              train = True) 
 
@@ -390,7 +390,7 @@ def train_val_batch(model, train, val, save_dict, lr, loss_fn, epochs, batch_siz
                                                                                             epoch, 
                                                                                             IP,
                                                                                             save_dict, 
-                                                                                            device, config,
+                                                                                            device, config,SS,
                                                                                             optimizer = None, 
                                                                                             train = False)
         print(f"v loss  {v_loss}")

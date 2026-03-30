@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from torchvision.models import resnet18
 
 
-import Simulation_settings2 as SS
+import SimulationSettings.Settings1 as SS
 from Dir_learning.modelCardsP3Direction import get_lin_lay
 from Dir_learning.functions import  ImageProcessor
 from Dir_learning.modelManagment import choose_model,choose_scheduler

@@ -1,4 +1,4 @@
-from Dir_learning.modelManagment import get_lin_lay
+from src.modelManagment import get_lin_lay
 class Cards:
     def __init__(self):
         model_card_vgg = {'name': 'vgg', 'model': 'vgg16',
