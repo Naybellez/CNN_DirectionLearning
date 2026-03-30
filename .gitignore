@@ -1,3 +1,14 @@
+*.png
+*.jpg
+*.ipynb
+*.pkl
+wandb/
+saves/
+/__pycache__
+
+
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
