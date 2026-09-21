@@ -1,8 +1,8 @@
 # model managment functions
 import torch
 import torch.nn as nn
-from src.architectures import PrintLayer#, Flattern
-from src.architectures import sevennet, eightnnet, sixnet, smallnet1, smallnet2, smallnet3
+from src.architectures import PrintLayer  #, Flattern
+from src.architectures import tennet, sevennet, eightnnet, sixnet, smallnet1, smallnet2, smallnet3
 #from torchvision.models import vgg16
 import torch.nn.functional as F
 import pickle
@@ -21,6 +21,8 @@ def choose_model(model_name, lin_lay, dropout, output_lin_lay=11):
         return sevennet(in_chan=3, f_lin_lay=int(lin_lay), l_lin_lay=output_lin_lay, ks= (3,5), dropout= dropout)
     elif model_name == '8c3l':
         return eightnnet(in_chan=3, f_lin_lay=int(lin_lay), l_lin_lay=output_lin_lay, ks= (3,5), dropout= dropout)
+    elif model_name == '10c4l':
+        return tennet(in_chan=3, f_lin_lay=int(lin_lay), l_lin_lay = output_lin_lay, ks=(3, 5), dropout=dropout)
     elif model_name in ['vgg16', 'vgg', 'VGG', 'VGG16']:
         from torchvision.models import vgg16
         model_vgg16 = vgg16()
@@ -236,3 +238,50 @@ def choose_scheduler(save_dict, optimizer):
     elif save_dict['scheduler'] == "NoSched":
         scheduler = None
     return scheduler
+
+def get_seeds(resolution, modelname, picklePath):
+	import os
+	pkl_seeds = []
+	pklStart = 72
+	pklEnd = 75
+	pkl10Start = 71
+	pkl10End = 74
+
+	minusone = [[226, 72],[113, 36]]
+	minustwo =[[57, 18]]
+	minusthree = [[29, 9],[15, 5]]
+	minusfour = [[8, 3]]
+
+	if resolution in minusone:
+		pklStart = pklStart -3 # 3*1
+		pklEnd = pklEnd -3
+		pkl10Start = pkl10Start -3
+		pkl10End = pkl10End -3
+	elif resolution in minustwo:
+		pklStart = pklStart -6 # 3*2
+		pklEnd = pklEnd -6
+		pkl10Start = pkl10Start -6
+		pkl10End = pkl10End -6
+	elif resolution in minusthree:
+		pklstart = pklstart - 9 # 3*3
+		pklEnd = pklEnd -9
+		pkl10Start = pkl10Start -9
+		pkl10End = pkl10End -9
+	elif resolution in minusfour:
+		pklStart = pklStart -12 # 3*4
+		pklEnd = pklEnd -12
+		pkl10Start = pkl10Start -12
+		pkl10End =pkl10End - 12
+
+	for file in os.listdir(picklePath):
+		if file[-3:] == "pkl":
+			if modelname != "10c4l":
+				print(file[pklStart:pklEnd].replace("_",""))
+				if file[pklStart:pklEnd].replace("_","").isdecimal():
+					pkl_seeds.append(int(file[pklStart:pklEnd].replace("_","")))
+					print(f"File Check : {file[pklStart:pklEnd].replace('_','')}")
+			else:
+				print(file[pkl10Start:pkl10End].replace("_",""))
+				if file[pkl10Start:pkl10End].replace("_","").isdecimal():
+					pkl_seeds.append(int(file[pkl10Start:pkl10End].replace("_","")))
+	return pkl_seeds

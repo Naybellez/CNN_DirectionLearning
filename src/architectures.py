@@ -7,6 +7,60 @@
 import torch
 import torch.nn as nn
 
+def tennet(in_chan, f_lin_lay, l_lin_lay, ks, dropout): #  10 conv layers 4 linear
+    class TenNet(nn.Module):
+        def __init__(self):
+            super(TenNet, self).__init__()
+            self.flatten = nn.Flatten()
+
+            self.conv_layers = nn.Sequential(
+                nn.Conv2d(in_channels=in_chan, out_channels=32, kernel_size=ks, padding=2),
+                nn.ReLU(),
+                nn.Dropout(p=dropout),
+                nn.Conv2d(in_channels=32, out_channels=32,kernel_size=ks),
+                nn.ReLU(),
+                nn.Conv2d(in_channels=32, out_channels=64, kernel_size = ks, padding=2),
+                nn.ReLU(),
+                nn.Conv2d(in_channels=64, out_channels=64, kernel_size=ks),
+                nn.ReLU(),
+                nn.MaxPool2d(2, 2),
+                nn.Conv2d(in_channels=64, out_channels=128, kernel_size=ks, padding=2),
+                nn.ReLU(),
+                nn.Conv2d(in_channels=128, out_channels=128, kernel_size=ks),
+                nn.ReLU(),
+                nn.MaxPool2d(2, 2),
+                nn.Conv2d(in_channels=128, out_channels=256, kernel_size=ks, padding=2),
+                nn.ReLU(),
+                nn.Conv2d(in_channels=256, out_channels=256, kernel_size=ks),
+                nn.ReLU(),
+                nn.MaxPool2d(2,2),
+                nn.Conv2d(in_channels=256, out_channels=512, kernel_size=ks, padding=2),
+                nn.ReLU(),
+                nn.Conv2d(in_channels=512, out_channels=512, kernel_size=ks),
+                nn.ReLU(),
+                nn.MaxPool2d(2,2),
+                nn.Dropout(p=dropout)
+               )
+            self.linear_1 = nn.Sequential(
+                nn.Linear(f_lin_lay, 100),
+                nn.ReLU(),
+                nn.Linear(100, 100),
+                nn.ReLU(),
+                #nn.Linear(100,200),
+                #nn.ReLU(),
+                nn.Linear(100, l_lin_lay),
+                nn.Softmax()
+               )
+        def forward(self, x):
+           x = self.conv_layers(x)
+           x = x.flatten(start_dim=1)
+           x = x.squeeze()
+           x = self.linear_1(x)
+           return x
+
+    model = TenNet()
+    return model 
+
 # Define model - copy of what worked on MNIST
 def sevennet(in_chan, f_lin_lay, l_lin_lay, ks, dropout): # 7 conv layers 
     class SevenNet(nn.Module):

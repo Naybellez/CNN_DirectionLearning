@@ -186,7 +186,8 @@ class IDSWDataSetLoader3(Dataset):
             tense, label, img, imNorm = self.colour_size_tense(self.img_path[idx], vg=True)  #, img, imNorm
         elif (self.model_name == '8c3l' and size == [57, 15]) or (self.model_name == '8c3l' and size == [29, 9]) or (self.model_name == '8c3l' and self.res == [15, 5]) or (self.model_name == '8c3l' and size ==[8, 3]):
             tense, label, img, imNorm = self.colour_size_tense(self.img_path[idx], vg=True) #, img, imNorm
-            
+        elif (self.model_name == '10c4l' and size == [57, 18]) or(self.model_name == '10c4l' and size == [29, 9]) or (self.model_name == '10c4l' and size == [15, 5]) or (self.model_name == '10c4l' and size == [8, 3]):
+            tense, label, img, imNorm = self.colour_size_tense(self.img_path[idx], vg=True)
         elif (self.model_name == '7c3l' and size == [29, 9]) or (self.model_name == '7c3l' and self.res == [15, 5]) or (self.model_name == '7c3l' and size ==[8, 3]):
             tense, label, img, imNorm = self.colour_size_tense(self.img_path[idx], vg=True) #, img, imNorm
         elif (self.model_name == '6c3l' and self.res == [15, 5]) or (self.model_name == '6c3l' and size ==[8, 3]): #and size == [29, 9]) or (self.model_name == '6c3l'

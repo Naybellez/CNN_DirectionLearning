@@ -12,7 +12,17 @@ class Cards:
                                     ],
                          'idx': 0,
                          'dropout':0.2}
-        
+        model_card_10c4l = {'name': '10c4l', 'model' : '10c4l', 'channels':3, 'ks':(3, 5),
+                           'f_lin_lay': [110592, # 452, 144
+                                       20480,   # 113, 36
+                                       3072,   # 226, 72
+                                       71680,    # 57, 18
+                                       71680,  # 29, 9
+                                       71680,  # 15, 5
+                                       71680,  # 8, 3
+                                       ],
+                           'idx': 0,
+                           'dropout':0.2}
 
         model_card_8c3l = {'name': '8c3l', 'model': '8c3l', 'channels': 3, 'Ks': (3,5),
                           'f_lin_lay':[244224,   # 452 144 (32x244224 and 248832x100) (32x244224 and 248832x100)
@@ -89,7 +99,7 @@ class Cards:
                           'idx': 6,
                           'dropout':0.2}       
         
-        self.modelcards =[model_card_vgg,model_card_7c3l,model_card_6c3l,model_card_8c3l,model_card_4c3l,model_card_3c2l,model_card_2c2l]
+        self.modelcards =[model_card_vgg,model_card_10c4l,model_card_7c3l,model_card_6c3l,model_card_8c3l,model_card_4c3l,model_card_3c2l,model_card_2c2l]
         
         resolution_card_452144 = {'resolution':[452,144], 'padding':5, 'index':0}
         resolution_card_22672 = {'resolution':[226,72], 'padding':5, 'index':1}
@@ -115,6 +125,9 @@ class Cards:
 
 
 def get_lin_lay(model_card, resolution):
+    if isinstance(resolution, str):
+        import ast
+        resolution = ast.literal_eval(resolution)
     if resolution == [452, 144]:
         lin_lay = model_card['f_lin_lay'][0]
     elif resolution == [226, 72]:

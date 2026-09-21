@@ -102,7 +102,6 @@ def get_roughAcc(plusMinus, Tlabel, Preds):
 def loop_batch(model, 
                data, 
                loss_fn, 
-               batch_size, 
                sample,
                random_value,
                epoch, 
@@ -143,7 +142,7 @@ def loop_batch(model,
 
         numBatch = len(data)
         sizeBatch += len(x_batch)
-        
+        #print("len batch",len(batch), "len x-b:",len(x_batch), "len data:",len(data))
         if sizeBatch ==0 or numBatch == 0:
             print(f"{i} sizeBatch: {sizeBatch}   numBatch:  {numBatch}")
 
@@ -163,17 +162,17 @@ def loop_batch(model,
         #    wandb.log({"ValAcc rough": acc[2]})
 
         
-        """randomval = random.randint(0, len(x_batch))
-        if i == randomval:
+        #randomval = random.randint(0, len(x_batch))
+        """if i == random_value:
             print('in loop')
             IP.view(x_batch[0], 1, None, None, None, None)
-            print(x_batch[0])"""
+            #print(x_batch[0])"""
     
         
-        [predict_list.append(pred.argmax().item()) for pred in prediction]# .argmax()  .to('cpu')
-        [labels.append(y.argmax().item()) for y in y_batch] #.argmax()  .to('cpu')
+        [predict_list.append(pred.detach().to('cpu').numpy()) for pred in prediction]# .argmax()  .to('cpu')
+        [labels.append(y.detach().to('cpu').numpy()) for y in y_batch] #.argmax()  .to('cpu')
 
-        total_count+= batch_size
+        total_count+= SS.batchsize
         current_loss += loss.item()
 
         acc_MSE = MSE_metric(prediction.to('cpu'), y_batch.to('cpu'))
@@ -217,9 +216,10 @@ def loop_batch(model,
 
 
 #                   model,test, loss_fn, config.batch_size, device, config
-def test_loop_batch(model,data, loss_fn, batch_size, device, config, runname="", save_loc =""):
+def test_loop_batch(model,data, loss_fn, device, config, SS, runname="", save_loc =""):
     import sys
-    from plottingP3Direction import plot_predictions
+    from src.plottingP3Direction import plot_predictions
+    
     sys.path.append('../.')
     model = model.eval()
     predict_list = []
@@ -233,10 +233,12 @@ def test_loop_batch(model,data, loss_fn, batch_size, device, config, runname="",
     MAE_list = []
     peakdist_list = []
 
+    print("test len data", len(data))
     with torch.no_grad():
         for i, batch in enumerate(data,0):
             tense, label, img_batch, imNorm_batch = batch #, img_batch, imNorm_batch
-            
+            #print("test len batch :",len(batch))
+            #print("test len tense: ",len(tense))
             prediction = model.forward(tense.to(device))
             """for i in range(len(label)-1):
                 #print(len(label), label[0].argmax(), len(label)-1)
@@ -246,12 +248,15 @@ def test_loop_batch(model,data, loss_fn, batch_size, device, config, runname="",
             tacc = get_roughAcc(SS.std_dev, label, prediction)
             #wandb.log({"Test acc rough": tacc[2]})
             #[predict_list.append(pred.argmax().item()) for pred in prediction]
-            [predict_list.append(pred.argmax().to('cpu')) for pred in prediction]  #.argmax()  # .argmax(),.item(),.argmax(),.item()
-            [label_list.append(lab.argmax().to('cpu')) for lab in label] #.argmax()  # .argmax(),.item(),.argmax(),.item()
+            [predict_list.append(pred.to('cpu')) for pred in prediction]  #.argmax()  # .argmax(),.item(),.argmax(),.item()
+            [label_list.append(lab.to('cpu')) for lab in label] #.argmax()  # .argmax(),.item(),.argmax(),.item()
             
-            total_count += batch_size
+            total_count += SS.batchsize
 
-       
+            IP = ImageProcessor(device)
+            #  img, scale:int, name:str, save_loc
+            IP.view2(img_batch[0], 1, f"{i}_imgOG", save_loc)
+            IP.view2(imNorm_batch[0], 1, f"{i}_imgNorm", save_loc)
         
             test_err_MSE = MSE_metric(prediction.to('cpu'), label.to('cpu'))
             test_err_MAE =  MAE_metric(prediction.to('cpu'), label.to('cpu'))
@@ -279,7 +284,7 @@ def test_loop_batch(model,data, loss_fn, batch_size, device, config, runname="",
         accuracy = {'BaseAcc':baseacc_list,'MSE': MSE_list, 'MAE': MAE_list, 'peakDist': peakdist_list}
         return accuracy, predict_list, label_list
 
-def train_val_batch(model, train, val, save_dict, lr, loss_fn, epochs, batch_size, optimizer, scheduler, device, config, SS): #train_dl, val_dl, 
+def train_val_batch(model, train, val, save_dict, loss_fn, epochs, optimizer, device, config, SS): #train_dl, val_dl, 
     #print("Current allocated memory (GB):", torch.cuda.memory_allocated() / 1024 ** 3) 
     import sys
     sys.path.append('../.')
@@ -313,26 +318,21 @@ def train_val_batch(model, train, val, save_dict, lr, loss_fn, epochs, batch_siz
     t_label_list = []
     v_label_list = []
     
-    imNormBatch_list = []
-    #labels = []
     sample = False
     
     total_epochs = 0
     #print("Before Epochs of training - Current allocated memory (GB):", torch.cuda.memory_allocated(device=device) / 1024 ** 3)
 
-    """if optimizer: # need a choose scheduler function!
-        print("Optimizer present: ",optimizer)
-        scheduler = choose_scheduler(save_dict, optimizer)"""
         
     for epoch in tqdm(range(save_dict['start_epoch'],epochs)):
         print(f"Data Loading...")
         train_ds = IDSWDataSetLoader3(x_train, resolution, av_lum, model_name, half_ciprange, std_dev, device)# av_lum, res,pad,
-        trainL = DataLoader(train_ds, batch_size=batch_size, shuffle=True, drop_last=True) #, num_workers=2
+        trainL = DataLoader(train_ds, batch_size=SS.batchsize, shuffle=True, drop_last=True) #, num_workers=2
 
         val_ds= IDSWDataSetLoader3(x_val, resolution, av_lum, model_name, half_ciprange, std_dev, device)
-        val = DataLoader(val_ds, batch_size=batch_size, shuffle=True, drop_last=True)
+        val = DataLoader(val_ds, batch_size=SS.batchsize, shuffle=True, drop_last=True)
 
-        random_value = random.randrange(0,batch_size)
+        random_value = random.randrange(0,SS.batchsize)
         print('Training...')
         # , img_batch, imNorm_batch
         # if i initialise the tran and val dataloaders here - I would get different augmented images each epoch but with the same base images
@@ -341,7 +341,6 @@ def train_val_batch(model, train, val, save_dict, lr, loss_fn, epochs, batch_siz
         t_loss, train_prediction, t_label_list, tacc, model, optimizer, img_batch, imNorm_batch = loop_batch(model, 
                                                                                                              trainL,
                                                                                                              loss_fn,
-                                                                                                             batch_size,
                                                                                                              sample, 
                                                                                                              random_value, 
                                                                                                              epoch,  
@@ -361,8 +360,9 @@ def train_val_batch(model, train, val, save_dict, lr, loss_fn, epochs, batch_siz
         
         if int(epoch) == int(random_value):     # == 0 and epoch >1:
             print(f"EPOCH    {epoch} / {epochs}:")
-            IP.view2(img_batch[0], 1, "original")
-            IP.view2(imNorm_batch[0], 1, "Processed") # img, scale:int, name:str
+            #view(img, scale:int, loop_run_name:str, save_dict:dict,  epoch:int, where:str):
+            IP.view2(img_batch[0], 1, "original",save_dict)
+            IP.view2(imNorm_batch[0], 1, "Processed",save_dict) # img, scale:int, name:str
             print(f"TRUE LABEL    :          {t_label_list[0]}")
             print(f"PREDICTION    :          {train_prediction[0]}")
 
@@ -377,14 +377,12 @@ def train_val_batch(model, train, val, save_dict, lr, loss_fn, epochs, batch_siz
         t_predict_list.append(train_prediction)
         #wandb.log({'t_loss':t_loss})
        
-        #t_accuracy_list.append(tacc)
 
         print('Validating...')
 
         v_loss, val_prediction, v_label_list, vacc, img_batch, imNorm_batch = loop_batch(model, 
                                                                                             val, 
                                                                                             loss_fn,
-                                                                                            batch_size,
                                                                                             sample,
                                                                                             random_value,
                                                                                             epoch, 
@@ -400,10 +398,9 @@ def train_val_batch(model, train, val, save_dict, lr, loss_fn, epochs, batch_siz
         v_accuracy_BASE_list.append(vacc['MAE'])
         v_accuracy_PEAKDIST_list.append(vacc['peakDist'])
         
-        if scheduler and scheduler is not "NoSched":
-            scheduler.step(v_loss)
-            #print("sched step")
-            #print(scheduler.state_dict())
+        if SS.scheduler_value and SS.scheduler_value is not "NoSched":
+            SS.scheduler_value.step(v_loss)
+
             
         v_loss_list.append(v_loss)
         #[v_predict_list.append(pred) for pred in val_prediction]
