@@ -1,4 +1,10 @@
-from src.modelManagment import get_lin_lay
+# Last edited 191126 - tidying
+# script contining set model hyperparameter values and functions to retrieve them
+# Studies trained models seven image resolutions
+# The resolution size affects the feature map size that is passed to the classificiation head
+# f_lin_lay key relates to the first linear layer in the models - first layer of the model head
+# name or model keys can be used to retrive the correct layer value
+
 class Cards:
     def __init__(self):
         model_card_vgg = {'name': 'vgg', 'model': 'vgg16',
@@ -61,11 +67,6 @@ class Cards:
                            'idx': 3,
                           'dropout':0.2}
         
-        
-        
-        
-        
-        
         model_card_4c3l = {'name': '4c3l', 'model': '4c3l', 'channels': 3, 'Ks': (3,5),
                           'f_lin_lay':[530432,    # 452 144
                                      133760,     # 226 72 
@@ -98,8 +99,8 @@ class Cards:
                                      128],       # 8 3
                           'idx': 6,
                           'dropout':0.2}       
-        
-        self.modelcards =[model_card_vgg,model_card_10c4l,model_card_7c3l,model_card_6c3l,model_card_8c3l,model_card_4c3l,model_card_3c2l,model_card_2c2l]
+        # All models are added to a list to allow for looping through model types
+        self.modelcards = [model_card_vgg,model_card_10c4l,model_card_7c3l,model_card_6c3l,model_card_8c3l,model_card_4c3l,model_card_3c2l,model_card_2c2l]
         
         resolution_card_452144 = {'resolution':[452,144], 'padding':5, 'index':0}
         resolution_card_22672 = {'resolution':[226,72], 'padding':5, 'index':1}
@@ -108,23 +109,21 @@ class Cards:
         resolution_card_299 = {'resolution':[29,9], 'padding':0, 'index':4} # 
         resolution_card_155 = {'resolution':[15,5], 'padding':0, 'index':5}
         resolution_card_83 = {'resolution':[8,3], 'padding':0, 'index':6}
-        
+
+        # all resolutions are added toa list to allow for looping though resolution values
         self.resolutioncards =[resolution_card_452144, resolution_card_22672, resolution_card_11336, resolution_card_5715, resolution_card_299, resolution_card_155, resolution_card_83]
 
-    def modname2linlay(self, model_name:str, res:list):
-        for card in self.modelcards:
-            if card['name']==model_name:
-                print(card['name'], res)
-                linlay = get_lin_lay(card, res)
-                return linlay
-
     def res2pad(self, res):
+        # takes in resolution
+        # returns associated padding value
         for r in self.resolution_cards:
             if r['resolution'] == res:
                 return r['padding']
 
 
 def get_lin_lay(model_card, resolution):
+    # takes in a model_card dictionary and target resolution
+    # Returns corresponding linear layer value
     if isinstance(resolution, str):
         import ast
         resolution = ast.literal_eval(resolution)
@@ -147,8 +146,7 @@ def get_lin_lay(model_card, resolution):
     return lin_lay
     
 def return_card(modelcards, key:str, targetValue:str):
-    #for card in modelcards:
-    #    if card['name'] == modelname:
-    #        return card
-    return [card for card in modelcards if card[key]== targetValue]
+    # Takes in modelcards (list), key (key) and target value (value)
+    # returns target model card
+    return [card for card in modelcards if card[key] == targetValue]
         

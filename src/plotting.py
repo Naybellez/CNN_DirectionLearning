@@ -2,45 +2,42 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import f1_score, accuracy_score, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
 import pickle
 import seaborn as sns
 
 
 def check_save_path(save_location):
+    # Hnadles error relating to missing or additional slash '/' 
+    # when concatinating file paths
     if save_location is not None:
         if save_location[-1]!= '/':
             save_location = save_location+'/'
     return save_location
 
 def plot_confusion(predictions:list, actual:list, title:str, run_name:str,save_location =None):
-    #this wasn't designed to be given a list of batches
+    # function to plot confusion matrix
+    # uses sklearn ConfusionMatrixDisplay function
+
     print(len(predictions), len(actual))
     save_location = check_save_path(save_location)
-    sns.set()
-    #print(predictions)
+    # process data
     if type(predictions[0]) != int and type(predictions[0]) != list:
-        predict_list = [int(t.argmax()) for t in predictions] ##
-        #print("2 p ",predict_list[:10], type(predict_list))
-        #print(predictions)
+        predict_list = [int(t.argmax()) for t in predictions]
         predict_list = [int(t.numpy()) for t in predictions]
     else:
         predict_list = predictions
 
-    #print("1  a ", actual[:10], type(actual))
     if type(actual[0])!= int:
         actual = [int(l.argmax()) for l in actual]
-    #print("2  a ", actual[:10], type(actual))
     actual = np.array(actual)
-    #print("3  a ", actual[:10], type(actual))
     predict_list = np.array(predict_list)
-    #print(len(predict_list), len(actual))
-    
+
     font1 = {'family':'serif','color':'darkblue','size':16}
     font2 = {'family':'serif','color':'darkblue','size':15}
 
     train_epoch_matrix = confusion_matrix(actual, predict_list, labels= [0,1,2,3,4,5,6,7,8,9,10])
-    disp= ConfusionMatrixDisplay(train_epoch_matrix, display_labels=[0,1,2,3,4,5,6,7,8,9,10])
+    disp = ConfusionMatrixDisplay(train_epoch_matrix, display_labels=[0,1,2,3,4,5,6,7,8,9,10])
     disp.plot(cmap='plasma')
     plt.title(run_name+'\n'+title, font1) #label="Accuracy Curve \n"+title, font1)
     plt.xlabel('Predicted Label', font2)

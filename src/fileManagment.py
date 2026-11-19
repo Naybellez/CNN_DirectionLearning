@@ -1,4 +1,5 @@
 # file type managment functions
+# last edited 191126
 import os
 import csv
 import sys
@@ -9,6 +10,7 @@ import torch
 
 #     #    SAVING TO FILE TYPE FUNCTIONS. #    #    #    TAKES A DICTIONARY   #    #   # 
 def save2csv_nest_dict(nested_dict, file_name, save_location:str):
+    # saves nested dictionary in csv format
     # flattern nested dictionary
     flatterend_dict = {}
     for k,v in nested_dict.items():
@@ -29,6 +31,7 @@ def save2csv_nest_dict(nested_dict, file_name, save_location:str):
         f.close()
 
 def check_obj4np(obj):
+    # converts nested items to single list
     # check dictionary values for json and csv
     if isinstance(obj, dict):
         return {key: check_obj4np(value) for key, value in obj.items()}
@@ -43,6 +46,7 @@ def check_obj4np(obj):
     
 def save2josn_nested_dict(nested_dict, file_name, save_location:str):
     # save to json
+    # saves nested dictionary as json file
     nested_dict = check_obj4np(nested_dict)
     json_obj = json.dumps(nested_dict, indent=4)
     with open(save_location+str(file_name)+'.json', 'a+') as f:
@@ -50,6 +54,7 @@ def save2josn_nested_dict(nested_dict, file_name, save_location:str):
         f.close()
 
 def save2csv(nested_dict, file_name, save_location:str):
+    # save dictionary as csv
     nested_dict = check_obj4np(nested_dict)
     columns = list(nested_dict.keys())
     path = os.path.join(save_location, file_name +".csv")
@@ -70,6 +75,7 @@ def save2csv(nested_dict, file_name, save_location:str):
               print("unexpected error: ", sys.exc_info()[0])
  
 def save2json(nested_dict, file_name, save_location:str):
+    # save dictionary as json
     nested_dict = check_obj4np(nested_dict)
     json_obj = json.dumps(nested_dict, indent=4)
     path = os.path.join(save_location, file_name+".json")
@@ -80,6 +86,7 @@ def save2json(nested_dict, file_name, save_location:str):
     
 #    #   READ IN  FROM FILE TYPE  FUNCTIONS  #   #  #    #   READ IN  FROM FILE TYPE  FUNCTIONS  #   #
 def read_in_json(file_path, file_name):
+    # handles read in json file
     path = os.path.join(file_path, 'file_name')
     try:
         with open(path, 'r') as f:
@@ -101,8 +108,6 @@ def print_run_type(run_type: str):
     print('                  ----------------------')
     print(f' \n                  {run_type}... \n')
     print('                  ----------------------')
-
-
 
 def print_top_results(best_optim, best_lossfn, best_lr, best_valaccuracy, best_epoch):
     print('Top results from hyperparameter sweep:')
