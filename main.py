@@ -1,6 +1,10 @@
-# This is a wrapper that calls main.py from the src folder
-import argparse
+# This is a wrapper that calls setup.py from the src folder
+# This script allows for multiple simulation to be run using a single bash command
+# eg. python3 main.py --GPU 0
 
+# last edited 201126 - tidying up
+
+import argparse
 
 parser = argparse.ArgumentParser()
 
