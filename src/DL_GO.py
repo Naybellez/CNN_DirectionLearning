@@ -1,28 +1,22 @@
-
+# last edited 191126
+# Script contains run_go and _go, the simulation functions
 import wandb
-#import date
 import time 
 import numpy as np
-
 import torch
 from torch.utils.data import DataLoader
 from torchvision.models import resnet18
 
-
-#import Simulation_settings as SS
-
 from src.modelCardsP3Direction import get_lin_lay
 from src.functions import  ImageProcessor
-from src.modelManagment import choose_model,choose_scheduler
+from src.modelManagment import choose_model
 from src.dataPreProcessingP3Direction import get_data
 from src.dataloaderP3Direction import IDSWDataSetLoader3
-from src.fns4wandb import set_lossfn, getAcc_fromdict
+from src.SimManagment import set_lossfn
 from src.loopsP3Direction import test_loop_batch, train_val_batch
-from src.fileManagment import save2csv, save2json
-from src.plotting import learning_curve, accuracy_curve
-from src.plottingP3Direction import plot_confusion
 
 def run_go(GPU):
+    # Handles GPU init and _go function
     if GPU == 0:
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
         import SimulationSettings.Settings0 as SS 
@@ -37,7 +31,9 @@ def run_go(GPU):
     torch.cuda.empty_cache()
 
     def _go(config=None):
-
+        # Handles model training and testing
+        # Handles looping though resolution values
+        # One run results in multiple simulation with different parameters
         if len(SS.gitHASH) <1:
             print("YOU FORGET THE GIT HASH")
             return
@@ -47,12 +43,9 @@ def run_go(GPU):
         with wandb.init(mode="offline", config=config):  
             config = wandb.config
 
-            #for model_idx, model_card in enumerate(SS.modelcards):
-            #print(model_card) # debugging
             model_card = SS.modelcard
             print(model_card)
             model_name = model_card['model']
-            #model_index = model_card['idx']
             dropout = model_card['dropout'] 
 
             for res_idx, resolution_card in enumerate(SS.all_rescards):
@@ -78,7 +71,7 @@ def run_go(GPU):
                 epochs = SS.epochs #40
 
                 IP = ImageProcessor(device)
-
+                # unhash if using wandb simulation manager
                 #wandb.log({'gitHash':SS.gitHASH})
                         #wandb.log({'Epochs': epochs})
                         #wandb.log({'schedType':SS.scheduler_value})
@@ -101,13 +94,9 @@ def run_go(GPU):
                 # SELECTING THE MODEL BASED ON MODEL_NAME
                 if model_name == 'resnet18':
                     model = resnet18(weights=None, num_classes =360).to(device)
-                    model_index = 100
                 else:
                     model = choose_model(model_name, lin_lay, dropout, SS.output_lin_lay).to(device)
                 torch.cuda.empty_cache()
-                # FOR increases DS size in training via augmentations (yaw augmentations) only create the DSL for test here, Train and Val in epoch loop
-                # that will give different yaw augmentations each loop
-                # if i also increase epochs, I get more unique tries for direction learning
 
                 # DATALOADING # DATALOADING # DATALOADING # DATALOADING # DATALOADING # DATALOADING # DATALOADING # DATALOADING 
                 print("Model Loaded.  \n Loading Data...")
@@ -116,14 +105,12 @@ def run_go(GPU):
                 av_lum = IP.new_luminance(x_train)
                 train = (x_train, resolution, av_lum, model_name, SS.half_ciprange, SS.std_dev, batch)
 
-                test_ds= IDSWDataSetLoader3(x_test, resolution,av_lum,model_name, SS.half_ciprange, SS.std_dev, device)
+                test_ds = IDSWDataSetLoader3(x_test, resolution,av_lum,model_name, SS.half_ciprange, SS.std_dev, device)
                 print("LEN test custom loader : ", len(test_ds))
                 test = DataLoader(test_ds, batch_size=SS.batchsize, shuffle=True, drop_last=True) #, num_workers=2
                 print("LEN test loader : ",len(test))
-                #print(test.len)
                 # set optimizer
                 optimizer = torch.optim.Adam(model.parameters(),lr=SS.learning_rate)
-                #scheduler = choose_scheduler(save_dict, optimizer)
 
                 # Tell simualtion manager (WANDB) how frequently to log progress
                 #wandb.watch(model, loss_fn, log='all', log_freq=2, idx = model_index)
@@ -132,17 +119,18 @@ def run_go(GPU):
                 loop_run_name = f"{save_dict['Run']}_{resolution}_{SS.learning_rate}_{SS.scheduler_value}_{seed}_{loss_type}"
 
                 # TRAINING # TRAINING # TRAINING # TRAINING # TRAINING # TRAINING # TRAINING # TRAINING # TRAINING # TRAINING # TRAINING # TRAINING 
-                model, save_dict = train_val_batch(model, train, x_val, save_dict,  loss_fn,epochs, optimizer, device, config, SS)
+                model, save_dict = train_val_batch(model, train, x_val, save_dict,  loss_fn, epochs, optimizer, device, config, SS)
 
                 # TESTING # TESTING # TESTING # TESTING # TESTING # TESTING # TESTING # TESTING # TESTING # TESTING # TESTING # TESTING 
-                test_acc, test_predict_list, y_test = test_loop_batch(model,test, loss_fn,  device,config, SS, runname=loop_run_name, save_loc = save_dict['save_location']) #model, model_name, X, Y, res, pad, loss_fn, device, num_classes=11
-                test_predict_numerical = [p.detach().to('cpu').numpy() for p in test_predict_list] #.detach().to('cpu').numpy()
-                y_test_numerical = [y.detach().to('cpu').numpy() for y in y_test]
+                test_acc, test_predict_list, y_test = test_loop_batch(model,test, device, config, SS, runname=loop_run_name, save_loc=save_dict['save_location']) 
+
+                # Prep data for plotting
+                #test_predict_numerical = [p.detach().to('cpu').numpy() for p in test_predict_list] #.detach().to('cpu').numpy()
+                #y_test_numerical = [y.detach().to('cpu').numpy() for y in y_test]
 
                 # PRINTING AND SAVING # PRINTING AND SAVING # PRINTING AND SAVING # PRINTING AND SAVING # PRINTING AND SAVING # PRINTING AND SAVING 
                 #wandb.log({'test_predict': test_predict_list})
                 #wandb.log({'test_labels': list(y_test)})
-                #save_dict.update({'test_acc': test_acc})
                 save_dict['TESTAccBase'] = test_acc['BaseAcc']
                 save_dict['TESTAccMSE'] = test_acc['MSE']
                 save_dict['TESTAccMAE'] = test_acc['MAE']
@@ -154,30 +142,10 @@ def run_go(GPU):
                 print(' \n Val Acc: ', save_dict['val_PEAKDIST'][-1])
                 print(' \n Test Acc: ', test_acc)
 
-
-                # PLOTTING # PLOTTING # PLOTTING # PLOTTING # PLOTTING # PLOTTING # PLOTTING # PLOTTING # PLOTTING # PLOTTING # PLOTTING 
-                # unpack accuracies for plotting
-                #t_acc = save_dict['t_accuracy_list'] # Training
-                #tbase_acc, tMSE, tMAE, t_peakdist = getAcc_fromdict(t_acc)
-
-                #v_acc = save_dict['v_accuracy_list'] # Validation
-                #vbase_acc, vMSE, vMAE, v_peakdist = getAcc_fromdict(v_acc)
-
-                # plotting
-                #learning_curve(save_dict['t_loss_list'], save_dict['v_loss_list'], save_location=save_dict['save_location'],run_name=loop_run_name)
-
-                #accuracy_curve(save_dict['train_baseAcc'], save_dict['val_baseAcc'] ,save_location=save_dict['save_location'],run_name="Basic"+loop_run_name)
-                #accuracy_curve(save_dict['train_MSE'], save_dict['val_MSE'] ,save_location=save_dict['save_location'],run_name="MSE"+loop_run_name)
-                #accuracy_curve(save_dict['train_MAE'], save_dict['val_MAE'] ,save_location=save_dict['save_location'],run_name="MAE"+loop_run_name)
-                #accuracy_curve(save_dict['train_PEAKDIST'], save_dict['val_PEAKDIST'] ,save_location=save_dict['save_location'],run_name="PeakDist"+loop_run_name)
-
-                #plot_confusion(predictions= test_predict_numerical, actual= y_test_numerical, title = "Test Confusion matrix", run_name = loop_run_name,save_location =save_dict['save_location'])
-
                 # SAVING # SAVING # SAVING # SAVING # SAVING # SAVING # SAVING # SAVING 
                 save_dict.update({'run time': (time.process_time() - run_start_time)})
-
-                _save_location = save_dict['save_location']
-                title = save_dict['Run']
+                #_save_location = save_dict['save_location']
+                #title = save_dict['Run']
                 #save2json(save_dict, loop_run_name, _save_location)
                 #save2csv(save_dict, title, _save_location)
                 model.to('cpu')

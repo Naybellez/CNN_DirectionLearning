@@ -1,16 +1,18 @@
-# Converting pynib run to py file run
+# script containing setup function
+# last edited 201126 - tidying up
 
 # IMPORTS
 import wandb
 import sys
 sys.path.append('../../.')
-# CUSTOM FUNCTION IMPORTS
-
-#import SimulationSettings.Settings0 as SS
 from src.DL_GO import run_go
 
 
 def setup(GPU):
+	# Handles calling of run_go function
+	# calls occur for every random seed
+	# simulation metics are saved in config dictionary
+	# Allows for multiple simulation to be run from one call.
 	import torch
 	wandb.init(mode='offline')
 
